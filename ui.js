@@ -61,12 +61,30 @@ $(async function() {
   });
 
   /**
-   * Event listener for "submit" (creating a new post)".
+   * Event listener for navbar "submit" (opens form for a new post)".
    *  If successfully we will setup the user instance
    */
 
   $navSubmit.on("click", async function(evt) {
     $submitForm.slideToggle();
+  });
+
+  /**
+   * Event listener for submitting new story
+   */
+
+  $submitForm.on("submit", async function(evt) {
+    let newStory = {
+      author: $("#author").val(),
+      title: $("#title").val(),
+      url: $("#url").val()
+    };
+    const storyList = await StoryList.getStories();
+    // console.log(newStory);
+    let addedStory = await storyList.addStory(currentUser, newStory);
+    // console.log(addedStory);
+    const result = generateStoryHTML(addedStory);
+    $allStoriesList.prepend(result);
   });
 
   /**

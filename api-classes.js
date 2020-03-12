@@ -47,9 +47,16 @@ class StoryList {
     // TODO - Implement this functions!
     // this function should return the newly created story so it can be used in
     // the script.js file where it will be appended to the DOM
+    let response = await axios.post(`${BASE_URL}/stories`, {
+      token: user.loginToken,
+      story: newStory
+    });
+    // console.log("response", response);
+    let responseStory = new Story(response.data.story);
+    this.stories.push(responseStory);
+    return responseStory;
   }
 }
-
 
 /**
  * The User class to primarily represent the current user.
@@ -114,7 +121,9 @@ class User {
     const existingUser = new User(response.data.user);
 
     // instantiate Story instances for the user's favorites and ownStories
-    existingUser.favorites = response.data.user.favorites.map(s => new Story(s));
+    existingUser.favorites = response.data.user.favorites.map(
+      s => new Story(s)
+    );
     existingUser.ownStories = response.data.user.stories.map(s => new Story(s));
 
     // attach the token to the newUser instance for convenience
@@ -147,7 +156,9 @@ class User {
     existingUser.loginToken = token;
 
     // instantiate Story instances for the user's favorites and ownStories
-    existingUser.favorites = response.data.user.favorites.map(s => new Story(s));
+    existingUser.favorites = response.data.user.favorites.map(
+      s => new Story(s)
+    );
     existingUser.ownStories = response.data.user.stories.map(s => new Story(s));
     return existingUser;
   }
@@ -158,7 +169,6 @@ class User {
  */
 
 class Story {
-
   /**
    * The constructor is designed to take an object for better readability / flexibility
    * - storyObj: an object that has story properties in it
