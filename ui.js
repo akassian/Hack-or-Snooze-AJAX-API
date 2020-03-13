@@ -7,6 +7,7 @@ $(async function() {
   const $loginForm = $("#login-form");
   const $createAccountForm = $("#create-account-form");
   const $ownStories = $("#my-articles");
+  const $navAll = $("#nav-all");
   const $navLogin = $("#nav-login");
   const $navSubmit = $("#nav-submit");
   const $navFavorites = $("#nav-favorites");
@@ -19,156 +20,186 @@ $(async function() {
   // global currentUser variable
   let currentUser = null;
 
-  //
-
+  // Load everything if logged in
   await checkIfLoggedIn();
 
-  /**
-   * Event listener for logging in.
-   *  If successfully we will setup the user instance
-   */
+  async function bindOnClicks() {
+    /**
+     * Event listener for logging in.
+     *  If successfully we will setup the user instance
+     */
 
-  $loginForm.on("submit", async function(evt) {
-    evt.preventDefault(); // no page-refresh on submit
+    $loginForm.on("submit", async function(evt) {
+      evt.preventDefault(); // no page-refresh on submit
 
-    // grab the username and password
-    const username = $("#login-username").val();
-    const password = $("#login-password").val();
+      // grab the username and password
+      const username = $("#login-username").val();
+      const password = $("#login-password").val();
 
-    // call the login static method to build a user instance
-    const userInstance = await User.login(username, password);
-    // set the global user to the user instance
-    currentUser = userInstance;
-    syncCurrentUserToLocalStorage();
-    loginAndSubmitForm();
-  });
+      // call the login static method to build a user instance
+      const userInstance = await User.login(username, password);
+      // set the global user to the user instance
+      currentUser = userInstance;
+      syncCurrentUserToLocalStorage();
+      loginAndSubmitForm();
+    });
 
-  /**
-   * Event listener for signing up.
-   *  If successfully we will setup a new user instance
-   */
+    /**
+     * Event listener for signing up.
+     *  If successfully we will setup a new user instance
+     */
 
-  $createAccountForm.on("submit", async function(evt) {
-    evt.preventDefault(); // no page refresh
+    $createAccountForm.on("submit", async function(evt) {
+      evt.preventDefault(); // no page refresh
 
-    // grab the required fields
-    let name = $("#create-account-name").val();
-    let username = $("#create-account-username").val();
-    let password = $("#create-account-password").val();
+      // grab the required fields
+      let name = $("#create-account-name").val();
+      let username = $("#create-account-username").val();
+      let password = $("#create-account-password").val();
 
-    // call the create method, which calls the API and then builds a new user instance
-    const newUser = await User.create(username, password, name);
-    currentUser = newUser;
-    syncCurrentUserToLocalStorage();
-    loginAndSubmitForm();
-  });
+      // call the create method, which calls the API and then builds a new user instance
+      const newUser = await User.create(username, password, name);
+      currentUser = newUser;
+      syncCurrentUserToLocalStorage();
+      loginAndSubmitForm();
+    });
 
-  /**
-   * Event listener for navbar "submit" (opens form for a new post)".
-   *  If successfully we will setup the user instance
-   */
+    /**
+     * Event listener for navbar "submit" (opens form for a new post)".
+     *  If successfully we will setup the user instance
+     */
 
-  $navSubmit.on("click", async function(evt) {
-    $submitForm.slideToggle();
-  });
+    $navAll.on("click", async function(evt) {
+      // $allStoriesList.show();
+      // $favoritedArticles.hide();
+      // await bindOnClicks();
+    });
 
-  /**
-   * Event listener for navbar "submit" (opens form for a new post)".
-   *  If successfully we will setup the user instance
-   */
+    /**
+     * Event listener for navbar "submit" (opens form for a new post)".
+     *  If successfully we will setup the user instance
+     */
 
-  $navFavorites.on("click", async function(evt) {
-    $allStoriesList.fadeToggle();
-    $favoritedArticles.fadeToggle();
-  });
+    $navSubmit.on("click", async function(evt) {
+      $submitForm.slideToggle();
+    });
 
-  /**
-   * Event listener for submitting new story
-   */
+    /**
+     * Event listener for navbar "submit" (opens form for a new post)".
+     *  If successfully we will setup the user instance
+     */
 
-  $submitForm.on("submit", async function(evt) {
-    let newStory = {
-      author: $("#author").val(),
-      title: $("#title").val(),
-      url: $("#url").val()
-    };
-    const storyList = await StoryList.getStories();
-    console.log(newStory);
-    let addedStory = await storyList.addStory(currentUser, newStory);
-    console.log(addedStory);
-    const result = generateStoryHTML(addedStory);
-    $allStoriesList.prepend(result);
-    $submitForm.slideUp();
-    $("#author").val("");
-    $("#title").val("");
-    $("#url").val("");
-  });
+    $navFavorites.on("click", async function(evt) {
+      $allStoriesList.fadeToggle();
+      $favoritedArticles.fadeToggle();
+      // await bindOnClicks();
+    });
 
-  /**
-   * Event listener for star/favorite button
-   */
+    /**
+     * Event listener for submitting new story
+     */
 
-  $(".favorite").on("click", async function(evt) {
-    let storyId = $(evt.target)
-      .parent()
-      .attr("id");
-    // If star is filled / is a favorite
-    if (checkIfFavoriteById(storyId)) {
-      // Empty the star
-      $(`.btn${storyId}`).removeClass("fas");
-      $(`.btn${storyId}`).addClass("far");
+    $submitForm.on("submit", async function(evt) {
+      let newStory = {
+        author: $("#author").val(),
+        title: $("#title").val(),
+        url: $("#url").val()
+      };
+      const storyList = await StoryList.getStories();
+      // console.log(newStory);
+      let addedStory = await storyList.addStory(currentUser, newStory);
+      // console.log(addedStory);
+      const result = generateStoryHTML(addedStory);
+      $allStoriesList.prepend(result);
+      $submitForm.slideUp();
+      $("#author").val("");
+      $("#title").val("");
+      $("#url").val("");
+    });
 
-      // DELETE api call to remove from favorites
-      let newFavorites = await StoryList.removeFavorite(currentUser, storyId);
-      // Delete from currentUser.favorites
-      // deleteFavoriteById(storyId);
-      currentUser.favorites = newFavorites;
-    }
-    // If star is not filled
-    else {
-      // Fill the star
-      $(`.btn${storyId}`).addClass("fas");
-      $(`.btn${storyId}`).removeClass("far");
+    /**
+     * Event listener for star/favorite button
+     */
 
-      // POST api call to add to favorites
-      let newFavorites = await StoryList.addFavorite(currentUser, storyId);
-      // Add to currentUser.favorites
-      // await addFavoriteById(storyId);
-      currentUser.favorites = newFavorites;
-    }
-  });
+    $("body").on("click", ".favorite", async function(evt) {
+      // We used favorite-storyId for ids of favorite html items
+      // this grabs storyId out in both cases
+      let storyId = $(evt.target)
+        .parent()
+        .attr("id")
+        .split("favorite-");
+      storyId = storyId[storyId.length - 1];
+      console.log(storyId);
 
-  /**
-   * Log Out Functionality
-   */
+      // If star is filled (is a favorite)
+      if (checkIfFavoriteById(storyId)) {
+        // Empty the star
+        $(`.btn${storyId}`).removeClass("fas");
+        $(`.btn${storyId}`).addClass("far");
 
-  $navLogOut.on("click", function() {
-    // empty out local storage
-    localStorage.clear();
-    // refresh the page, clearing memory
-    location.reload();
-  });
+        // DELETE api call to remove from server favorites
+        let newFavorites = await StoryList.removeFavorite(currentUser, storyId);
+        // Update currentUser.favorites
+        currentUser.favorites = newFavorites;
 
-  /**
-   * Event Handler for Clicking Login
-   */
+        // HELPER STILL EXISTS BUT LINE REPLACED BY LINE ABOVE
+        // deleteFavoriteById(storyId);
 
-  $navLogin.on("click", function() {
-    // Show the Login and Create Account Forms
-    $loginForm.slideToggle();
-    $createAccountForm.slideToggle();
-    $allStoriesList.toggle();
-  });
+        // COMMENTED OUT B/C DELETE IS NOT EXPECTED FUNCTIONALITY
+        // Delete item from $favoritedArticles (HTML favorites list)
+        // let favoriteArticle = $(`#favorite-${storyId}`);
+        // console.log(favoriteArticle);
+        // favoriteArticle.remove();
+      }
+      // If star is not filled (not yet favorited)
+      else {
+        // POST api call to add to server favorites
+        let newFavorites = await StoryList.addFavorite(currentUser, storyId);
+        // Update currentUser.favorites
+        currentUser.favorites = newFavorites;
 
-  /**
-   * Event handler for Navigation to Homepage
-   */
+        // HELPER STILL EXISTS BUT LINE REPLACED BY LINE ABOVE
+        // await addFavoriteById(storyId);
+        let story = await getStoryById(storyId);
+        $favoritedArticles.append(generateFavoriteStoryHTML(story));
+        // Fill the star
+        $(`.btn${storyId}`).addClass("fas");
+        $(`.btn${storyId}`).removeClass("far");
+      }
+    });
 
-  $("body").on("click", "#nav-all", async function() {
-    hideElements();
-    await generateStories();
-    $allStoriesList.show();
-  });
+    /**
+     * Log Out Functionality
+     */
+
+    $navLogOut.on("click", function() {
+      // empty out local storage
+      localStorage.clear();
+      // refresh the page, clearing memory
+      location.reload();
+    });
+
+    /**
+     * Event Handler for Clicking Login
+     */
+
+    $navLogin.on("click", function() {
+      // Show the Login and Create Account Forms
+      $loginForm.slideToggle();
+      $createAccountForm.slideToggle();
+      $allStoriesList.toggle();
+    });
+
+    /**
+     * Event handler for Navigation to Homepage
+     */
+
+    $("body").on("click", "#nav-all", async function() {
+      hideElements();
+      await generateStories();
+      $allStoriesList.show();
+    });
+  }
 
   /**
    * On page load, checks local storage to see if the user is already logged in.
@@ -185,6 +216,7 @@ $(async function() {
     //  this is designed to run once, on page load
     currentUser = await User.getLoggedInUser(token, username);
     await generateStories();
+    await bindOnClicks();
 
     if (currentUser) {
       showNavForLoggedInUser();
@@ -221,6 +253,15 @@ $(async function() {
     for (let i = 0; i < storyList.length; i++) {
       if (storyList[i].storyId === storyId) {
         currentUser.favorites.push(storyList[i]);
+      }
+    }
+  }
+
+  async function getStoryById(storyId) {
+    const storyList = await (await StoryList.getStories()).stories;
+    for (let i = 0; i < storyList.length; i++) {
+      if (storyList[i].storyId === storyId) {
+        return storyList[i];
       }
     }
   }
@@ -270,7 +311,9 @@ $(async function() {
     }
     // loop through all of our favorited stories and generate HTML for them (hidden)
     for (let story of currentUser.favorites) {
-      const result = generateStoryHTML(story);
+      const result = generateFavoriteStoryHTML(story);
+      result.addClass("favorite-article");
+      // console.log(result[0].outerHTML);
       $favoritedArticles.append(result);
       if (checkIfFavorite(story)) {
         $(`.btn${story.storyId}`).removeClass("far");
@@ -289,6 +332,29 @@ $(async function() {
     // render story markup
     const storyMarkup = $(`
       <li id="${story.storyId}">
+      <i class="favorite far fa-star btn${story.storyId}"></i>
+        <a class="article-link" href="${story.url}" target="a_blank">
+          <strong>${story.title}</strong>
+        </a>
+        <small class="article-author">by ${story.author}</small>
+        <small class="article-hostname ${hostName}">(${hostName})</small>
+        <small class="article-username">posted by ${story.username}</small>
+      </li>
+    `);
+
+    return storyMarkup;
+  }
+
+  /**
+   * A function to render HTML for an individual Story instance
+   */
+
+  function generateFavoriteStoryHTML(story) {
+    let hostName = getHostName(story.url);
+
+    // render story markup
+    const storyMarkup = $(`
+      <li id="favorite-${story.storyId}">
       <i class="favorite far fa-star btn${story.storyId}"></i>
         <a class="article-link" href="${story.url}" target="a_blank">
           <strong>${story.title}</strong>
