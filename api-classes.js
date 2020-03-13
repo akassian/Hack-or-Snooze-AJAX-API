@@ -56,6 +56,41 @@ class StoryList {
     this.stories.push(responseStory);
     return responseStory;
   }
+
+  /**
+   * Method to make a POST request to favorites and add the new story to the list
+   * Returns the new story object
+   */
+
+  static async addFavorite(user, storyId) {
+    let response = await axios.post(
+      `${BASE_URL}/users/${user.username}/favorites/${storyId}`,
+      {
+        token: user.loginToken
+      }
+    );
+    // console.log("response", response);
+    let newFavorites = response.data.user.favorites;
+    return newFavorites;
+  }
+  /**
+   * Method to make a DELETE request to favorites and remove the  story from the list
+   * Returns the new favorites
+   */
+
+  static async removeFavorite(user, storyId) {
+    let response = await axios.delete(
+      `${BASE_URL}/users/${user.username}/favorites/${storyId}`,
+      {
+        data: {
+          token: user.loginToken
+        }
+      }
+    );
+    // console.log("response", response);
+    let newFavorites = response.data.user.favorites;
+    return newFavorites;
+  }
 }
 
 /**
