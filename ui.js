@@ -4,6 +4,7 @@ $(async function() {
   const $submitForm = $("#submit-form");
   const $filteredArticles = $("#filtered-articles");
   const $favoritedArticles = $("#favorited-articles");
+  const $myArticles = $("#my-articles");
   const $loginForm = $("#login-form");
   const $createAccountForm = $("#create-account-form");
   const $ownStories = $("#my-articles");
@@ -64,16 +65,17 @@ $(async function() {
       loginAndSubmitForm();
     });
 
+    // COMMENTED OUT BELOW B/C PUT INTO STARTED CODE ON LISTENER FOR BODY -> ALL-NAV
     /**
      * Event listener for navbar "submit" (opens form for a new post)".
      *  If successfully we will setup the user instance
      */
 
-    $navAll.on("click", async function(evt) {
-      // $allStoriesList.show();
-      // $favoritedArticles.hide();
-      // await bindOnClicks();
-    });
+    // $navAll.on("click", async function(evt) {
+    //   $allStoriesList.show();
+    //   $favoritedArticles.hide();
+    //   // await bindOnClicks();
+    // });
 
     /**
      * Event listener for navbar "submit" (opens form for a new post)".
@@ -90,9 +92,22 @@ $(async function() {
      */
 
     $navFavorites.on("click", async function(evt) {
-      $allStoriesList.fadeToggle();
-      $favoritedArticles.fadeToggle();
+      $favoritedArticles.empty();
+      generateFavorites();
+      $submitForm.slideUp();
+      $myArticles.fadeOut();
+      $allStoriesList.fadeOut();
+      $favoritedArticles.fadeIn();
       // await bindOnClicks();
+    });
+
+    $navMyStories.on("click", async function(evt) {
+      $myArticles.empty();
+      generateMyStories();
+      $submitForm.slideUp();
+      $allStoriesList.fadeOut();
+      $favoritedArticles.fadeOut();
+      $myArticles.fadeIn();
     });
 
     /**
@@ -117,6 +132,8 @@ $(async function() {
       $("#url").val("");
     });
 
+    $("body").on("click", ".trash", async function(evt) {});
+
     /**
      * Event listener for star/favorite button
      */
@@ -129,7 +146,10 @@ $(async function() {
         .attr("id")
         .split("favorite-");
       storyId = storyId[storyId.length - 1];
-      console.log(storyId);
+      console.log("after first split", storyId);
+      storyId = storyId.split("mystory-");
+      storyId = storyId[storyId.length - 1];
+      console.log("after 2nd split", storyId);
 
       // If star is filled (is a favorite)
       if (checkIfFavoriteById(storyId)) {
@@ -196,8 +216,10 @@ $(async function() {
 
     $("body").on("click", "#nav-all", async function() {
       hideElements();
-      await generateStories();
-      $allStoriesList.show();
+      // await generateStories();
+      // $allStoriesList.show();
+      $allStoriesList.fadeIn();
+      $favoritedArticles.fadeOut();
     });
   }
 
@@ -229,6 +251,8 @@ $(async function() {
 
   function checkIfFavoriteById(storyId) {
     // console.log(currentUser.favorites);
+    // return currentUser.favorites.some(story => story.id === storyId
+    // );
     for (story of currentUser.favorites) {
       // console.log(story);
       if (story.storyId === storyId) {
@@ -309,6 +333,13 @@ $(async function() {
         $(`.btn${story.storyId}`).addClass("fas");
       }
     }
+    // build HTML of favorites page
+    generateFavorites();
+    // build HTML of my stories page
+    generateMyStories();
+  }
+
+  function generateFavorites() {
     // loop through all of our favorited stories and generate HTML for them (hidden)
     for (let story of currentUser.favorites) {
       const result = generateFavoriteStoryHTML(story);
@@ -319,6 +350,17 @@ $(async function() {
         $(`.btn${story.storyId}`).removeClass("far");
         $(`.btn${story.storyId}`).addClass("fas");
       }
+    }
+  }
+
+  function generateMyStories() {
+    // loop through all of our favorited stories and generate HTML for them (hidden)
+    for (let story of currentUser.ownStories) {
+      console.log(story);
+      const result = generateMyStoryHTML(story);
+      result.addClass("my-article");
+      // console.log(result[0].outerHTML);
+      $myArticles.append(result);
     }
   }
 
@@ -346,7 +388,7 @@ $(async function() {
   }
 
   /**
-   * A function to render HTML for an individual Story instance
+   * A function to render HTML for an individual My Favorites Story instance
    */
 
   function generateFavoriteStoryHTML(story) {
@@ -355,6 +397,30 @@ $(async function() {
     // render story markup
     const storyMarkup = $(`
       <li id="favorite-${story.storyId}">
+      <i class="favorite far fa-star btn${story.storyId}"></i>
+        <a class="article-link" href="${story.url}" target="a_blank">
+          <strong>${story.title}</strong>
+        </a>
+        <small class="article-author">by ${story.author}</small>
+        <small class="article-hostname ${hostName}">(${hostName})</small>
+        <small class="article-username">posted by ${story.username}</small>
+      </li>
+    `);
+
+    return storyMarkup;
+  }
+
+  /**
+   * A function to render HTML for an My Stories Story instance
+   */
+
+  function generateMyStoryHTML(story) {
+    let hostName = getHostName(story.url);
+
+    // render story markup
+    const storyMarkup = $(`
+      <li id="mystory-${story.storyId}">
+      <i class="trash fas fa-trash-alt del${story.storyId}"></i>
       <i class="favorite far fa-star btn${story.storyId}"></i>
         <a class="article-link" href="${story.url}" target="a_blank">
           <strong>${story.title}</strong>
